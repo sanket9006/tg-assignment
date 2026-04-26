@@ -37,3 +37,10 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+### Frontend / Node.js ###
+node_modules/
+dashboard/dist/
+dashboard/build/
+.env
+.env.local

@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 // This class listens to the "walk" through the query tree
-public class QueryNormalizer extends QueryBaseListener {
+public class QueryNormalizer extends SQLiteParserBaseListener {
     private StringBuilder normalizedQuery = new StringBuilder();
     private List<Object> parameters = new ArrayList<>();
 
@@ -13,17 +13,19 @@ public class QueryNormalizer extends QueryBaseListener {
     public void visitTerminal(TerminalNode node) {
         int type = node.getSymbol().getType();
 
-        // Use the token types generated from your Query.g4
-        // 5 is usually INT, 6 is usually STRING, but we check by name
-        if (type == QueryLexer.INT || type == QueryLexer.STRING) {
+        if (type == SQLiteLexer.NUMERIC_LITERAL || type == SQLiteLexer.STRING_LITERAL) {
             normalizedQuery.append("?"); // Replace value with placeholder
             parameters.add(node.getText()); // Save the actual value
-        } else if (type != QueryLexer.EOF) {
+        } else if (type != SQLiteLexer.EOF) {
             normalizedQuery.append(node.getText()).append(" ");
         }
     }
 
     public String getNormalizedSql() {
-        return normalizedQuery.toString().trim().replaceAll("\\s+", " ");
+        return normalizedQuery.toString().trim().replaceAll("\\s+", " ").toUpperCase();
+    }
+
+    public List<Object> getParameters() {
+        return parameters;
     }
 }
