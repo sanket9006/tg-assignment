@@ -1,36 +1,37 @@
 # Project Summary: SQL Query Normalization & Plan Caching
 
 ## Overview
-This full-stack application demonstrates how to normalize SQL queries, generate caching keys, and store execution plans to optimize database operations. By leveraging ANTLR for parsing, it intelligently replaces constants with placeholders and standardizes queries (handling whitespace and case insensitivity) to reuse structurally identical plans. A React-based frontend dashboard allows users to interact with the caching engine in real-time, view hit/miss stats, and measure performance latency.
+This full-stack application demonstrates how to normalize SQL queries, generate caching keys, and store execution plans to optimize database operations. By leveraging the official SQLite ANTLR grammar for parsing, it intelligently replaces constants with placeholders and standardizes queries (handling whitespace and case insensitivity) to reuse structurally identical plans. A React-based frontend dashboard allows users to interact with the caching engine in real-time, view hit/miss stats, clear the cache, and measure performance latency. The project is fully containerized and production-ready.
 
 ---
 
 ## Architecture
 
-The application is split into a **Spring Boot Backend** and a **React (Vite) Frontend**, working together to simulate an intelligent query planner.
+The application is split into a **Spring Boot Backend** and a **React (Vite) Frontend**, designed for seamless cloud deployment.
 
 ### 1. The Frontend (React + Vite)
-- **Framework & Tooling**: Built with React and Vite. It serves as the user dashboard.
+- **Framework & Tooling**: Built with React and Vite. Features a dark-mode, glassmorphism UI.
 - **Files**:
-  - `dashboard/src/App.jsx`: Manages state and coordinates API requests.
-  - `dashboard/src/components/QueryForm.jsx`: The input interface for writing SQL queries.
+  - `dashboard/src/App.jsx`: Manages state, coordinates API requests, and handles cache clearing.
+  - `dashboard/src/components/QueryForm.jsx`: The input interface featuring 10 complex preset queries.
   - `dashboard/src/components/ResultDisplay.jsx`: Visualizes the generated plan, extracted parameters, cache hit/miss status, and execution latency.
-- **Proxy/CORS**: Vite proxies API calls from `/api/...` directly to the Spring Boot server to bypass CORS during development (configured in `vite.config.js`).
+- **Deployment**: Configured for **Vercel**, communicating with the live backend via the `BACKEND_URL` variable.
 
-### 2. The Backend (Java + Spring Boot)
-- **Controller Layer (`src/main/java/org/example/controller/QueryController.java`)**: Handles REST API requests from the dashboard. Provides endpoints for generating plans (`/api/query/plan`), clearing the cache (`/api/query/clear-cache`), and fetching hit/miss statistics (`/api/query/stats`).
-- **Service Layer (`src/main/java/org/example/service/QueryService.java`)**: Acts as a bridge between the REST controller and the underlying caching logic.
-- **Caching Engine (`src/main/java/org/example/cache/QueryPlanCache.java`)**: The core brain of the system. It tracks performance (`executionTimeMs`), atomic counters for `hits` and `misses`, and maintains an in-memory `ConcurrentHashMap` linking normalized SQL queries to their generated plans.
+### 2. The Backend (Java 21 + Spring Boot)
+- **Controller Layer (`QueryController.java`)**: Handles REST API requests with `@CrossOrigin` support. Endpoints: `/api/query/plan`, `/api/query/clear-cache`, and `/api/query/stats`.
+- **Service Layer (`QueryService.java`)**: Acts as a bridge between the REST controller and the underlying caching logic.
+- **Caching Engine (`QueryPlanCache.java`)**: The core brain of the system. Tracks performance (`executionTimeMs`), atomic counters for `hits` and `misses`, and maintains an in-memory `ConcurrentHashMap`.
 - **Data Transfer Objects (DTOs)**: 
-  - `src/main/java/org/example/model/CacheResult.java`: An internal model for transferring caching statistics and extracted parameters within the backend.
-  - `src/main/java/org/example/model/QueryRequest.java` & `QueryResponse.java`: The JSON schemas for client-server communication.
+  - `CacheResult.java`: An internal model for transferring caching statistics and extracted parameters.
+  - `QueryRequest.java` & `QueryResponse.java`: The JSON schemas for client-server communication.
+- **Deployment**: Containerized using a multi-stage `Dockerfile` to build an executable "Fat JAR" and hosted on **Render.com**.
 
-### 3. The Parsing Engine (ANTLR)
-- **Grammar (`src/main/antlr4/org/example/Query.g4`)**: Defines the structural rules of valid SQL queries. During the Maven build phase, ANTLR generates the lexer and parser classes.
-- **Normalizer (`src/main/java/org/example/QueryNormalizer.java`)**: Implements the ANTLR Listener pattern. As the parser walks through the SQL tree, the normalizer identifies terminal nodes (like integers or strings), extracts them into a parameter list, replaces them with `?` placeholders, strips extra whitespace, and converts the query to uppercase to guarantee consistent cache keys.
+### 3. The Parsing Engine (ANTLR4)
+- **Grammars (`SQLiteLexer.g4` & `SQLiteParser.g4`)**: Uses the official SQLite grammar to support complex SQL syntax including JOINs, Subqueries, CTEs, and modifications.
+- **Normalizer (`QueryNormalizer.java`)**: Extends `SQLiteParserBaseListener`. As the parser walks the tree, it intercepts tokens (`NUMERIC_LITERAL`, `STRING_LITERAL`), extracts parameters into a list, replaces them with `?` placeholders, and standardizes formatting to guarantee consistent cache keys.
 
 ### 4. Testing
-- **Unit Tests (`src/test/java/org/example/QueryPlanCacheTest.java`)**: Validates the core logic of the application using JUnit. It includes tests for case insensitivity, whitespace normalization, parameter extraction binding, and cache hit/miss ratio counters.
+- **Unit Tests (`QueryPlanCacheTest.java`)**: Validates the core logic using JUnit. Covers case insensitivity, whitespace normalization, parameter extraction, and cache counters.
 
 ---
 

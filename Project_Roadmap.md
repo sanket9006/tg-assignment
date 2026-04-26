@@ -24,7 +24,7 @@ This document outlines the current state of the assignment, the technical gaps w
 
 To scale this application for real-world scenarios, the following steps are required:
 
-1. **Expand ANTLR Grammar (`Query.g4`)**: Move beyond basic `SELECT` to support `JOIN`s, `GROUP BY`, `ORDER BY`, nested queries, and complex `WHERE` conditions (`AND`/`OR`/`IN`).
+1. **Expand ANTLR Grammar (Official SQLite)**: **Completed** - Replaced the custom basic grammar with the official ANTLR SQLite grammar, enabling parsing of complex `JOIN`s, `GROUP BY`s, and nested sub-queries.
 2. **LRU Cache Implementation**: Replace `ConcurrentHashMap` with an LRU cache (e.g., Caffeine) to automatically evict old queries and prevent OutOfMemory errors.
 3. **Connect to a Real Planner**: Integrate with Apache Calcite or a real database (PostgreSQL via JDBC) to generate and cache *actual* execution plans instead of mocked JSON strings.
 4. **AST Signatures**: Hash the Abstract Syntax Tree instead of strings. `SELECT a, b` and `SELECT b, a` should ideally resolve to the same plan if structurally identical.
@@ -32,42 +32,32 @@ To scale this application for real-world scenarios, the following steps are requ
 
 ---
 
-## 3. Java Knowledge Roadmap (VIMP)
+## 3. Core Knowledge Roadmap (VIMP)
 
-To fully understand and maintain the code, you must master the following core Java concepts:
+To fully master this full-stack project, you need to understand the architectural pillars that hold it together. Below is a structured learning guide:
 
-### A. The Collections Framework & Concurrency
-* **What it is:** How Java stores and retrieves data structures in memory safely across multiple threads.
-* **In your code:** `ConcurrentHashMap<String, String>` (thread-safe cache storage) and `ArrayList<Object>` (parameter storage).
-* **Key Concept:** `AtomicInteger` is used for tracking `hits` and `misses` to ensure thread-safe counting without race conditions.
+### A. Java & Concurrency Mastery
+* **The Collections Framework**: Understanding how Java stores data in memory. `ConcurrentHashMap<String, String>` is specifically used because it is thread-safe, meaning if 1,000 users hit your API at once, the cache won't crash.
+* **Atomic Variables**: `AtomicInteger` is used for the `hits` and `misses` counters to prevent "Race Conditions" during high concurrency.
+* **Separation of Concerns**: 
+  * *Controllers* handle HTTP traffic.
+  * *Services* contain business logic.
+  * *DTOs (Data Transfer Objects)* like `CacheResult` and `QueryResponse` carry structured data between layers.
 
-### B. Classes, DTOs, and Methods
-* **What it is:** The organization of code into objects and Data Transfer Objects.
-* **In your code:** `QueryPlanCache` is the Service, `CacheResult` is a DTO used to pass internal data, and `QueryResponse` maps it to JSON for the frontend.
-* **Key Concept:** Separation of concerns. Controllers handle HTTP, Services handle logic, and Models/DTOs hold data.
+### B. Spring Boot & REST API Architecture
+* **Annotations**: How `@RestController`, `@PostMapping`, and `@CrossOrigin` magically configure a Java class to act as a web server.
+* **Serialization**: How Spring Boot automatically converts raw JSON from your React frontend into Java Objects (`@RequestBody QueryRequest`).
+* **Maven & Executable JARs**: How the `spring-boot-maven-plugin` repackages the compiled code into a single "Fat JAR" containing an embedded Tomcat server so the app can run anywhere with `java -jar`.
 
-### C. Spring Boot & REST APIs
-* **What it is:** The framework running the backend server.
-* **In your code:** `@RestController`, `@PostMapping`, and `@CrossOrigin`.
-* **Key Concept:** How Java intercepts HTTP requests from the Vite/React frontend and maps JSON payloads to Java objects (`@RequestBody QueryRequest`).
+### C. ANTLR4 Deep Dive (The Parsing Engine)
+ANTLR (Another Tool for Language Recognition) is the "Engine" reading the SQL.
+1. **The Grammar (`.g4`)**: The strict rules defining valid SQL. We integrated the massive official `SQLiteParser.g4` to handle complex queries.
+2. **The Lexer**: Turns the raw SQL string into "Tokens" (e.g., separating `SELECT`, `*`, `FROM`).
+3. **The Parser**: Takes those tokens and builds a hierarchical "Parse Tree."
+4. **The Listener Pattern**: Your `QueryNormalizer` extends `SQLiteParserBaseListener`. As ANTLR "walks" through the Parse Tree, it triggers events. Our code listens for literal tokens (`NUMERIC_LITERAL`, `STRING_LITERAL`), extracts them, and swaps them for `?` placeholders.
 
-### D. Unit Testing with JUnit
-* **What it is:** Automated testing of code logic.
-* **In your code:** `QueryPlanCacheTest.java` using `@Test`, `@Before`, `assertEquals()`, and `assertTrue()`.
-* **Key Concept:** Ensuring small pieces of logic (like case-folding and hit/miss logic) stay unbroken as the application scales.
-
-### E. Performance Measurement
-* **What it is:** Benchmarking execution speed.
-* **In your code:** `System.nanoTime()` inside `QueryPlanCache.java`.
-* **Key Concept:** Capturing nanosecond-precision timestamps before and after execution to calculate latency.
-
----
-
-## 4. ANTLR Knowledge Roadmap
-
-ANTLR (Another Tool for Language Recognition) is the "Engine" that reads the SQL. You should know:
-
-1. **The Grammar (`.g4`)**: The set of rules that define what "valid" SQL looks like for your system.
-2. **The Lexer**: Turns the raw string into "Tokens" (Individual words like `SELECT`, `*`, `FROM`).
-3. **The Parser**: Builds a "Parse Tree," which is a hierarchical map of the query structure.
-4. **The Listener**: Your `QueryNormalizer` is a "Listener." As ANTLR "walks" through the Parse Tree, it triggers events. Your code listens for "Terminal Nodes" (values) and swaps them for placeholders.
+### D. Deployment & DevOps
+* **Multi-stage Docker Builds**: Our `Dockerfile` first uses a Maven image to build the `.jar` file, and then copies *only* the compiled `.jar` into a lightweight JRE image. This makes the production container incredibly small and secure.
+* **Platform as a Service (PaaS)**:
+  * **Render.com**: Runs our persistent Spring Boot Docker container. Serverless platforms aren't ideal for Spring Boot due to "cold starts", so a persistent container is used.
+  * **Vercel**: Hosts the React (Vite) frontend. It reads the `VITE_BACKEND_URL` environment variable to securely connect to the live Render API in production.

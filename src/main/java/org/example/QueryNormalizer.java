@@ -14,7 +14,7 @@ public class QueryNormalizer extends SQLiteParserBaseListener {
         int type = node.getSymbol().getType();
 
         if (type == SQLiteLexer.NUMERIC_LITERAL || type == SQLiteLexer.STRING_LITERAL) {
-            normalizedQuery.append("?"); // Replace value with placeholder
+            normalizedQuery.append("? "); // Add space after placeholder
             parameters.add(node.getText()); // Save the actual value
         } else if (type != SQLiteLexer.EOF) {
             normalizedQuery.append(node.getText()).append(" ");

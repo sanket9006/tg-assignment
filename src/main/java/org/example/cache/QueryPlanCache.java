@@ -36,7 +36,15 @@ public class QueryPlanCache {
             plan = cache.get(key);
         } else {
             misses.incrementAndGet();
-            plan = "{ \"execution_steps\": [\"Scan Table\", \"Filter by " + key + "\"] }";
+            String operation = key.split(" ")[0]; // Get SELECT, UPDATE, etc.
+            plan = "{\n" +
+                   "  \"execution_plan\": {\n" +
+                   "    \"operation\": \"" + operation + "\",\n" +
+                   "    \"strategy\": \"Optimal Index Scan\",\n" +
+                   "    \"cost\": 14.25,\n" +
+                   "    \"rows_estimated\": 1000\n" +
+                   "  }\n" +
+                   "}";
             cache.put(key, plan);
         }
 
