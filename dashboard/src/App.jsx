@@ -8,12 +8,14 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState(null);
 
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://tg-assignment-xr8i.onrender.com';
+
   const handleQuerySubmit = async (query) => {
     setLoading(true);
     setResult(null);
     setError(null);
     try {
-      const response = await fetch('/api/query/plan', {
+      const response = await fetch(`${BACKEND_URL}/api/query/plan`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query })
@@ -32,7 +34,7 @@ function App() {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('/api/query/stats');
+      const response = await fetch(`${BACKEND_URL}/api/query/stats`);
       const data = await response.json();
       setStats(data);
     } catch (err) {
