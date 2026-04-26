@@ -42,17 +42,32 @@ function App() {
     }
   };
 
+  const clearCache = async () => {
+    try {
+      await fetch(`${BACKEND_URL}/api/query/clear-cache`, { method: 'POST' });
+      fetchStats();
+      setResult(null);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   return (
     <div style={{ width: '100%', maxWidth: '100%' }}>
-      <h1 style={{ background: '-webkit-linear-gradient(45deg, var(--accent), #f06)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '40px' }}>Query Plan Dashboard</h1>
+      <h1 style={{ background: '-webkit-linear-gradient(45deg, var(--accent), #f06)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '40px', paddingBottom: '10px', lineHeight: '1.2' }}>Query Plan Dashboard</h1>
       <QueryForm onSubmit={handleQuerySubmit} />
       {loading && <div style={{ padding: '20px', color: 'var(--accent)', fontWeight: 'bold' }}>Analyzing Query...</div>}
       <ResultDisplay result={result} error={error} />
       
       <div style={{ marginTop: '40px', padding: '25px', borderRadius: '12px', background: 'var(--social-bg)', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <button onClick={fetchStats} className="submit-btn" style={{ padding: '10px 20px', borderRadius: '8px', background: 'transparent', border: '2px solid var(--accent)', color: 'var(--accent)', cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s ease' }}>
-          Refresh Cache Stats
-        </button>
+        <div style={{ display: 'flex', gap: '15px' }}>
+          <button onClick={fetchStats} className="submit-btn" style={{ padding: '10px 20px', borderRadius: '8px', background: 'transparent', border: '2px solid var(--accent)', color: 'var(--accent)', cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s ease' }}>
+            Refresh Cache Stats
+          </button>
+          <button onClick={clearCache} className="submit-btn" style={{ padding: '10px 20px', borderRadius: '8px', background: 'transparent', border: '2px solid #ef4444', color: '#ef4444', cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s ease' }}>
+            Clear Cache
+          </button>
+        </div>
         {stats && (
           <div style={{ marginTop: '20px', display: 'flex', gap: '30px', fontSize: '18px' }}>
             <div style={{ background: 'var(--bg)', padding: '15px 25px', borderRadius: '8px', border: '1px solid var(--border)', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>

@@ -1,8 +1,16 @@
 import React, { useState } from 'react';
 
 const presetQueries = [
-  "SELECT u.name, COUNT(*) FROM users u JOIN orders o ON u.id = o.user_id WHERE u.status = 'ACTIVE' GROUP BY u.name",
-  "SELECT p.category, AVG(p.price) FROM products p WHERE p.stock > 0 GROUP BY p.category HAVING AVG(p.price) > 50"
+  { label: 'Basic SELECT', query: "SELECT * FROM users WHERE age > 25 ORDER BY created_at DESC LIMIT 10" },
+  { label: 'JOIN & GROUP', query: "SELECT u.name, COUNT(*) FROM users u JOIN orders o ON u.id = o.user_id WHERE u.status = 'ACTIVE' GROUP BY u.name" },
+  { label: 'HAVING Clause', query: "SELECT p.category, AVG(p.price) FROM products p WHERE p.stock > 0 GROUP BY p.category HAVING AVG(p.price) > 50" },
+  { label: 'Subquery', query: "SELECT name, email FROM customers WHERE id IN (SELECT customer_id FROM orders WHERE total > 1000)" },
+  { label: 'CTE (WITH)', query: "WITH top_users AS (SELECT id FROM users WHERE score > 90) SELECT * FROM top_users JOIN profiles ON top_users.id = profiles.user_id" },
+  { label: 'INSERT', query: "INSERT INTO audit_logs (event_type, description, user_id) VALUES ('LOGIN', 'User logged in successfully', 42)" },
+  { label: 'UPDATE', query: "UPDATE inventory SET stock = stock - 5 WHERE product_id = 101 AND warehouse_id = 'WH-EAST'" },
+  { label: 'DELETE', query: "DELETE FROM expired_sessions WHERE last_active < '2023-01-01' AND session_type = 'WEB'" },
+  { label: 'Aggregations', query: "SELECT date(transaction_time) as day, SUM(amount) FROM sales GROUP BY day ORDER BY SUM(amount) DESC" },
+  { label: 'CROSS JOIN', query: "SELECT a.id, b.id FROM nodes a CROSS JOIN nodes b WHERE a.parent_id = b.id" }
 ];
 
 const QueryForm = ({ onSubmit }) => {
@@ -17,16 +25,16 @@ const QueryForm = ({ onSubmit }) => {
 
   return (
     <div style={{ textAlign: 'left', marginBottom: 30 }}>
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '15px', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '15px', flexWrap: 'wrap' }}>
         {presetQueries.map((q, i) => (
           <button 
             key={i} 
             type="button"
-            onClick={() => setQuery(q)}
-            style={{ fontSize: '13px', padding: '8px 16px', borderRadius: '20px', background: 'var(--accent-bg)', border: '1px solid var(--accent-border)', color: 'var(--accent)', cursor: 'pointer', transition: 'all 0.2s ease', fontWeight: '500' }}
+            onClick={() => setQuery(q.query)}
+            style={{ fontSize: '12px', padding: '6px 12px', borderRadius: '20px', background: 'var(--accent-bg)', border: '1px solid var(--accent-border)', color: 'var(--accent)', cursor: 'pointer', transition: 'all 0.2s ease', fontWeight: '500' }}
             className="preset-btn"
           >
-            Example Query {i + 1}
+            {q.label}
           </button>
         ))}
       </div>
