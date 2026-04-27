@@ -17,6 +17,9 @@ WORKDIR /app
 # Copy the compiled JAR file from the build stage
 COPY --from=build /app/target/tg-assignment-v2-1.0-SNAPSHOT.jar app.jar
 
+# Copy the Northwind SQLite database so the planner has tables to analyze
+COPY northwind.db /app/northwind.db
+
 # Expose the port your Spring Boot app runs on
 EXPOSE 8080
 
