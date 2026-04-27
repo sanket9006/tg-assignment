@@ -1,49 +1,78 @@
 # Project Summary: SQL Query Normalization & Plan Caching
 
 ## Overview
-This full-stack application demonstrates how to normalize SQL queries, generate caching keys, and store execution plans to optimize database operations. By leveraging the official SQLite ANTLR grammar for parsing, it intelligently replaces constants with placeholders and standardizes queries (handling whitespace and case insensitivity) to reuse structurally identical plans. A React-based frontend dashboard allows users to interact with the caching engine in real-time, view hit/miss stats, clear the cache, and measure performance latency. The project is fully containerized and production-ready.
+This full-stack application demonstrates the core mechanics of a modern database query optimizer. It accepts raw SQL queries, intelligently normalizes them by abstracting away hardcoded variables, and utilizes an in-memory caching mechanism to store and retrieve execution plans. This significantly reduces the computational overhead of parsing and planning structurally identical queries. 
+
+A React-based dashboard allows users to interact with the engine in real-time, view hit/miss statistics, monitor execution latency, and experiment with a massive suite of supported SQL operations (powered by the official ANTLR SQLite grammar).
 
 ---
 
-## Architecture
+## 🧠 Core System Logic
 
-The application is split into a **Spring Boot Backend** and a **React (Vite) Frontend**, designed for seamless cloud deployment.
+The system is built on four primary logical pillars: Lexical Parsing, Structural Normalization, Parameter Extraction, and Concurrent Caching.
 
-### 1. The Frontend (React + Vite)
-- **Framework & Tooling**: Built with React and Vite. Features a dark-mode, glassmorphism UI.
-- **Files**:
-  - `dashboard/src/App.jsx`: Manages state, coordinates API requests, and handles cache clearing.
-  - `dashboard/src/components/QueryForm.jsx`: The input interface featuring 10 complex preset queries.
-  - `dashboard/src/components/ResultDisplay.jsx`: Visualizes the generated plan, extracted parameters, cache hit/miss status, and execution latency.
-- **Deployment**: Configured for **Vercel**, communicating with the live backend via the `BACKEND_URL` variable.
+### 1. The Parsing Logic (ANTLR4)
+Traditional regex is insufficient for understanding nested SQL statements (like CTEs or Subqueries). Instead, we use **ANTLR4** with the official `SQLite` grammar.
+- **Lexical Analysis:** The `SQLiteLexer` takes the raw string and breaks it down into structured tokens (e.g., identifying `SELECT` as a keyword, and `100` as a `NUMERIC_LITERAL`).
+- **Tree Generation:** The `SQLiteParser` organizes these tokens into a hierarchical Abstract Syntax Tree (AST), understanding the mathematical and logical relationships between clauses.
 
-### 2. The Backend (Java 21 + Spring Boot)
-- **Controller Layer (`QueryController.java`)**: Handles REST API requests with `@CrossOrigin` support. Endpoints: `/api/query/plan`, `/api/query/clear-cache`, and `/api/query/stats`.
-- **Service Layer (`QueryService.java`)**: Acts as a bridge between the REST controller and the underlying caching logic.
-- **Caching Engine (`QueryPlanCache.java`)**: The core brain of the system. Tracks performance (`executionTimeMs`), atomic counters for `hits` and `misses`, and maintains an in-memory `ConcurrentHashMap`.
-- **Data Transfer Objects (DTOs)**: 
-  - `CacheResult.java`: An internal model for transferring caching statistics and extracted parameters.
-  - `QueryRequest.java` & `QueryResponse.java`: The JSON schemas for client-server communication.
-- **Deployment**: Containerized using a multi-stage `Dockerfile` to build an executable "Fat JAR" and hosted on **Render.com**.
+### 2. The Normalization & Extraction Logic (The Listener)
+The `QueryNormalizer` class implements the `SQLiteParserBaseListener` interface. As the `ParseTreeWalker` traverses the AST node by node, the normalizer listens for specific token types.
+- **Parameter Extraction:** When it encounters a `NUMERIC_LITERAL` or `STRING_LITERAL`, it intercepts the raw value, saves it into a sequential `List<Object>`, and dynamically replaces the node's output with a `? ` placeholder.
+- **Structural Standardization:** As the tree is flattened back into a string, the normalizer aggressively strips out redundant whitespaces and converts all keywords/identifiers to UPPERCASE. 
+- **Result:** Queries like `sELect *    from USERS where id=1` and `SELECT * FROM users WHERE id = 999` are perfectly reduced to the exact same cache key: `SELECT * FROM USERS WHERE ID = ? `.
 
-### 3. The Parsing Engine (ANTLR4)
-- **Grammars (`SQLiteLexer.g4` & `SQLiteParser.g4`)**: Uses the official SQLite grammar to support complex SQL syntax including JOINs, Subqueries, CTEs, and modifications.
-- **Normalizer (`QueryNormalizer.java`)**: Extends `SQLiteParserBaseListener`. As the parser walks the tree, it intercepts tokens (`NUMERIC_LITERAL`, `STRING_LITERAL`), extracts parameters into a list, replaces them with `?` placeholders, and standardizes formatting to guarantee consistent cache keys.
+### 3. The Thread-Safe Caching Logic
+Web applications must handle hundreds of concurrent requests. Traditional `HashMap`s or `int` counters will crash or corrupt data under high concurrency.
+- **Storage:** We utilize Java's `ConcurrentHashMap<String, String>` to store the normalized query string as the key, and the Execution Plan JSON as the value, ensuring safe, lock-free $O(1)$ lookups.
+- **Telemetry:** Cache hits and misses are tracked using `AtomicInteger`. This guarantees that if 50 requests hit the cache simultaneously, the counter increments safely without race conditions.
 
-### 4. Testing
-- **Unit Tests (`QueryPlanCacheTest.java`)**: Validates the core logic using JUnit. Covers case insensitivity, whitespace normalization, parameter extraction, and cache counters.
+### 4. The Real Database Planner Logic
+When a Cache Miss occurs, the system natively connects to an embedded **SQLite Northwind Database** via JDBC. It executes an `EXPLAIN QUERY PLAN` directly against the database, intercepting the true database execution strategy (e.g., Table Scans vs Index Searches) and converting it into a serialized JSON format for caching and frontend consumption.
 
 ---
 
-## Workflow (How it works)
+## 🔄 The Execution Flow (Step-by-Step)
 
-1. The **User** enters a raw SQL query (e.g., `sELect * from users WHERE id = 101   `) in the Frontend Dashboard.
-2. The Dashboard sends a JSON POST request to the **Spring Boot Controller**.
-3. The **Controller** delegates to the **QueryService**, which forwards the SQL to the **QueryPlanCache**.
-4. The cache delegates parsing to **ANTLR** and **QueryNormalizer**. The query is transformed into `SELECT * FROM USERS WHERE ID = ?` and `101` is saved into an extracted parameter list.
-5. The Cache checks its `ConcurrentHashMap`. 
-   - If the normalized query exists, it increments the **Hit** counter.
-   - If it doesn't, it generates a new mock execution plan, increments the **Miss** counter, and saves it.
-6. The caching execution time is measured, and the plan, stats, and parameters are wrapped in a `CacheResult` and sent back to the controller.
-7. The Controller transforms this into a `QueryResponse` and sends it to the Frontend.
-8. The **Frontend Dashboard** updates the UI to reflect the parsed plan, cache status, and execution speed.
+The lifecycle of a single query request flows through five distinct phases:
+
+### Phase 1: Ingestion & Routing
+1. The user inputs a complex SQL query into the React frontend and clicks "Analyze".
+2. The Vite proxy forwards the JSON payload to the Spring Boot backend (`@PostMapping("/plan")`).
+3. The `QueryController` receives the `QueryRequest` and delegates it down to the `QueryService` and ultimately the `QueryPlanCache`.
+
+### Phase 2: Lexical Analysis
+4. The system starts a high-precision nanosecond timer (`System.nanoTime()`).
+5. The raw SQL string is fed into the `CharStreams` reader.
+6. The `SQLiteLexer` processes the stream into a `CommonTokenStream`.
+7. The `SQLiteParser` evaluates the tokens and constructs the raw Parse Tree.
+
+### Phase 3: Traversal & Normalization
+8. The `ParseTreeWalker` begins traversing the generated tree.
+9. At each node, the `QueryNormalizer` applies our custom logic:
+   - Identifies literals, pushes them to the `parameters` array, and inserts a `?`.
+   - Normalizes spacing and casing.
+10. The walker finishes, outputting the finalized **Cache Key** (the normalized SQL string).
+
+### Phase 4: Cache Evaluation
+11. The engine checks the `ConcurrentHashMap` for the generated Cache Key.
+    - **Branch A (Cache HIT):** 
+      - The `hits` atomic counter increments.
+      - The stored JSON execution plan is instantly retrieved from memory.
+    - **Branch B (Cache MISS):**
+      - The `misses` atomic counter increments.
+      - The embedded SQLite Database generates a real Execution Plan via JDBC, serializes it to JSON, and stores it in the `ConcurrentHashMap` for future use.
+
+### Phase 5: Telemetry & Response
+12. The nanosecond timer stops, and the total execution time is calculated in milliseconds.
+13. The Execution Plan, Extracted Parameters list, Cache Status boolean, and Latency are packaged into a `CacheResult` DTO.
+14. The `QueryController` maps this to a `QueryResponse` and returns the HTTP 200 JSON response.
+15. The React Dashboard updates its state, rendering the beautifully formatted JSON plan, pill-shaped parameter tags, and the live Hit/Miss dashboard widgets.
+
+---
+
+## 🛠 Tech Stack Architecture
+- **Frontend:** React, Vite, CSS3 (Glassmorphism, Dark-mode), Vercel.
+- **Backend:** Java 21, Spring Boot 3.x, Maven.
+- **Engine Core:** ANTLR4 (Official SQLite Grammar), `java.util.concurrent`.
+- **Deployment & DevOps:** Multi-stage Dockerfile (Eclipse Temurin JRE), Render.com PaaS.

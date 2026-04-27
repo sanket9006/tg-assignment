@@ -25,10 +25,11 @@ This document outlines the current state of the assignment, the technical gaps w
 To scale this application for real-world scenarios, the following steps are required:
 
 1. **Expand ANTLR Grammar (Official SQLite)**: **Completed** - Replaced the custom basic grammar with the official ANTLR SQLite grammar, enabling parsing of complex `JOIN`s, `GROUP BY`s, and nested sub-queries.
-2. **LRU Cache Implementation**: Replace `ConcurrentHashMap` with an LRU cache (e.g., Caffeine) to automatically evict old queries and prevent OutOfMemory errors.
-3. **Connect to a Real Planner**: Integrate with Apache Calcite or a real database (PostgreSQL via JDBC) to generate and cache *actual* execution plans instead of mocked JSON strings.
-4. **AST Signatures**: Hash the Abstract Syntax Tree instead of strings. `SELECT a, b` and `SELECT b, a` should ideally resolve to the same plan if structurally identical.
-5. **Parameter Sniffing Logic**: Invalidate the cache when parameter cardinality drastically changes (e.g. 1 row vs 1 million rows returned).
+2. **Connect to a Real Planner**: **Completed** - Integrated an embedded SQLite JDBC driver connected to the Northwind database, executing real `EXPLAIN QUERY PLAN` commands instead of returning mocked strings.
+3. **Comprehensive Testing**: **Completed** - Implemented JaCoCo coverage reporting, JUnit Parameterized correctness validation, and Node.js load testing.
+4. **LRU Cache Implementation**: Replace `ConcurrentHashMap` with an LRU cache (e.g., Caffeine) to automatically evict old queries and prevent OutOfMemory errors.
+5. **AST Signatures**: Hash the Abstract Syntax Tree instead of strings. `SELECT a, b` and `SELECT b, a` should ideally resolve to the same plan if structurally identical.
+6. **Parameter Sniffing Logic**: Invalidate the cache when parameter cardinality drastically changes (e.g. 1 row vs 1 million rows returned).
 
 ---
 
