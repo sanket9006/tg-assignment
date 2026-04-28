@@ -42,5 +42,3 @@ build/
 node_modules/
 dashboard/dist/
 dashboard/build/
-.env
-.env.local

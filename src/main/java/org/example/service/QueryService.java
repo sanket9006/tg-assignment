@@ -20,4 +20,8 @@ public class QueryService {
     public Map<String, Integer> getStats() {
         return cache.getStats();
     }
+
+    public Map<String, String> getCacheDump() {
+        return cache.getCacheDump();
+    }
 }

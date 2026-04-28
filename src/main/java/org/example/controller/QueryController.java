@@ -38,4 +38,9 @@ public class QueryController {
     public Map<String, Integer> getStats() {
         return queryService.getStats();
     }
+
+    @GetMapping("/cache-dump")
+    public Map<String, String> getCacheDump() {
+        return queryService.getCacheDump();
+    }
 }

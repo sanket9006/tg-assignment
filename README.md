@@ -25,6 +25,34 @@ To go above and beyond the assignment requirements, a fully functional Proof of 
 
 ---
 
+## 🚀 How to Run Locally (via IntelliJ IDEA)
+
+This project consists of a Spring Boot backend and a React (Vite) frontend.
+
+### 1. Starting the Java Backend (IntelliJ)
+1. **Open the Project:** Launch IntelliJ IDEA and open the root `tg-assignment-v2` directory.
+2. **Sync Maven:** Wait for IntelliJ to index and automatically sync the Maven dependencies (it will download Spring Boot, ANTLR4, and the SQLite JDBC driver).
+3. **Generate ANTLR Sources:** Open the **Maven tool window** (usually on the right sidebar), navigate to `Lifecycle`, and double-click **`compile`**. This triggers the ANTLR4 plugin to generate the Java Lexer and Parser classes from the `.g4` grammar file.
+4. **Run the Server:** Navigate to `src/main/java/org/example/QueryPlanApplication.java`. Click the green **Run** (Play) button next to the class declaration. The Spring Boot backend will start on `http://localhost:8080`.
+
+### 2. Starting the React Frontend
+1. Open a new terminal window.
+2. Navigate to the `dashboard` directory:
+   ```bash
+   cd dashboard
+   ```
+3. Install the NPM dependencies:
+   ```bash
+   npm install
+   ```
+4. Start the local Vite development server:
+   ```bash
+   npm run dev
+   ```
+5. Click the local host link provided in the terminal (usually `http://localhost:5173`) to open the interactive dashboard. Ensure the backend is running so the dashboard can fetch query plans!
+
+---
+
 ## Deliverable 1: Design Document
 
 ### 1. Identifying "Similar" Queries (Structural Normalization)
