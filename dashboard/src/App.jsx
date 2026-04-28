@@ -122,31 +122,51 @@ function App() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
                   <thead style={{ position: 'sticky', top: 0, background: 'var(--bg)', zIndex: 1, borderBottom: '2px solid var(--border)' }}>
                     <tr>
-                      <th style={{ padding: '12px 15px', textAlign: 'left', color: 'var(--text-h)', fontWeight: 'bold', width: '45%' }}>Normalized SQL</th>
-                      <th style={{ padding: '12px 15px', textAlign: 'left', color: 'var(--text-h)', fontWeight: 'bold', width: '15%' }}>Operation</th>
-                      <th style={{ padding: '12px 15px', textAlign: 'left', color: 'var(--text-h)', fontWeight: 'bold', width: '40%' }}>Strategy</th>
+                      <th style={{ padding: '12px 15px', textAlign: 'left', color: 'var(--text-h)', fontWeight: 'bold', width: '15%' }}>Hash Key</th>
+                      <th style={{ padding: '12px 15px', textAlign: 'left', color: 'var(--text-h)', fontWeight: 'bold', width: '30%' }}>Normalized SQL</th>
+                      <th style={{ padding: '12px 15px', textAlign: 'left', color: 'var(--text-h)', fontWeight: 'bold', width: '5%' }}>Ver</th>
+                      <th style={{ padding: '12px 15px', textAlign: 'left', color: 'var(--text-h)', fontWeight: 'bold', width: '10%' }}>Parameters</th>
+                      <th style={{ padding: '12px 15px', textAlign: 'left', color: 'var(--text-h)', fontWeight: 'bold', width: '30%' }}>Strategy</th>
+                      <th style={{ padding: '12px 15px', textAlign: 'left', color: 'var(--text-h)', fontWeight: 'bold', width: '10%' }}>Cached At</th>
                     </tr>
                   </thead>
                   <tbody>
                     {Object.entries(cacheDump).map(([key, value], index) => {
+                      // Handle both old String format and new CachedEntry object format
+                      const isObject = typeof value === 'object' && value !== null;
+                      const entry = isObject ? value : { plan: value, normalizedSql: 'N/A', version: 'N/A', parameters: [], cachedAt: 0 };
+                      
                       let planInfo = {};
                       try {
-                        const parsed = JSON.parse(value);
+                        const parsed = JSON.parse(entry.plan);
                         planInfo = parsed.execution_plan || {};
                       } catch (e) {
                         planInfo = { strategy: 'Invalid JSON' };
                       }
                       
+                      const cachedTime = entry.cachedAt > 0 
+                        ? new Date(entry.cachedAt * 1000).toLocaleTimeString() 
+                        : 'Unknown';
+                      
                       return (
                         <tr key={index} style={{ borderBottom: '1px solid var(--border)', background: index % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.1)' }}>
-                          <td style={{ padding: '15px', color: 'var(--accent)', fontFamily: 'var(--mono)', fontSize: '13px', wordBreak: 'break-word', lineHeight: '1.5' }}>
+                          <td style={{ padding: '15px', color: '#94a3b8', fontFamily: 'var(--mono)', fontSize: '12px' }}>
                             {key}
                           </td>
-                          <td style={{ padding: '15px', color: 'var(--text)', fontWeight: 'bold' }}>
-                            {planInfo.operation || 'N/A'}
+                          <td style={{ padding: '15px', color: 'var(--accent)', fontFamily: 'var(--mono)', fontSize: '13px', wordBreak: 'break-word', lineHeight: '1.5' }}>
+                            {isObject ? entry.normalizedSql : key}
+                          </td>
+                          <td style={{ padding: '15px', color: 'var(--text)', fontSize: '13px' }}>
+                            {entry.version}
+                          </td>
+                          <td style={{ padding: '15px', color: 'var(--text)', fontSize: '13px', fontFamily: 'var(--mono)' }}>
+                            {entry.parameters && entry.parameters.length > 0 ? JSON.stringify(entry.parameters) : '[]'}
                           </td>
                           <td style={{ padding: '15px', color: 'var(--text)', fontSize: '13px', lineHeight: '1.5' }}>
                             {planInfo.strategy || 'N/A'}
+                          </td>
+                          <td style={{ padding: '15px', color: 'var(--text)', fontSize: '12px', opacity: 0.8 }}>
+                            {cachedTime}
                           </td>
                         </tr>
                       );
@@ -155,6 +175,9 @@ function App() {
                 </table>
               </div>
             )}
+            <div style={{ marginTop: '15px', padding: '15px', borderRadius: '8px', backgroundColor: 'rgba(56, 189, 248, 0.05)', border: '1px solid rgba(56, 189, 248, 0.2)', fontSize: '13px', color: 'var(--text)', lineHeight: '1.6' }}>
+              <strong style={{ color: 'var(--accent)' }}>💡 Technical Note:</strong> The cache uses a <strong>64-bit Long Hash Key</strong> (derived from SHA-256) instead of raw SQL strings to optimize memory usage. Each entry stores a <strong>CachedEntry object</strong> containing the execution plan, normalized SQL structure, extracted parameters, and metadata for future-proofing.
+            </div>
           </div>
         )}
       </div>

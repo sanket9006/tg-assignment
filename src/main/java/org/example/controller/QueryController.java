@@ -4,6 +4,7 @@ import org.example.model.QueryRequest;
 import org.example.model.QueryResponse;
 import org.example.service.QueryService;
 import org.example.model.CacheResult;
+import org.example.model.CachedEntry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
@@ -23,6 +24,7 @@ public class QueryController {
             response.setParameters(result.parameters);
             response.setCacheHit(result.cacheHit);
             response.setExecutionTimeMs(result.executionTimeMs);
+            response.setNormalizedSql(result.normalizedSql);
             return response;
         } catch (Exception e) {
             return new QueryResponse(null, e.getMessage());
@@ -40,7 +42,7 @@ public class QueryController {
     }
 
     @GetMapping("/cache-dump")
-    public Map<Long, String> getCacheDump() {
+    public Map<Long, CachedEntry> getCacheDump() {
         return queryService.getCacheDump();
     }
 }

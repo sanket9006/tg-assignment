@@ -8,6 +8,7 @@ public class QueryResponse {
     private List<Object> parameters;
     private Boolean cacheHit;
     private Long executionTimeMs;
+    private String normalizedSql;
 
     public QueryResponse() {}
     public QueryResponse(String plan, String error) {
@@ -29,4 +30,7 @@ public class QueryResponse {
 
     public Long getExecutionTimeMs() { return executionTimeMs; }
     public void setExecutionTimeMs(Long executionTimeMs) { this.executionTimeMs = executionTimeMs; }
+
+    public String getNormalizedSql() { return normalizedSql; }
+    public void setNormalizedSql(String normalizedSql) { this.normalizedSql = normalizedSql; }
 }

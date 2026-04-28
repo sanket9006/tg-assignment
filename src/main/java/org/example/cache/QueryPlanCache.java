@@ -6,6 +6,7 @@ import org.example.SQLiteLexer;
 import org.example.SQLiteParser;
 import org.example.QueryNormalizer;
 import org.example.model.CacheResult;
+import org.example.model.CachedEntry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -18,7 +19,8 @@ import java.security.MessageDigest;
 import java.nio.charset.StandardCharsets;
 
 public class QueryPlanCache {
-    private final Map<Long, String> cache = new ConcurrentHashMap<>();
+    private static final String CACHE_VERSION = "1.1";
+    private final Map<Long, CachedEntry> cache = new ConcurrentHashMap<>();
     private final AtomicInteger hits = new AtomicInteger(0);
     private final AtomicInteger misses = new AtomicInteger(0);
     private Connection connection;
@@ -50,7 +52,7 @@ public class QueryPlanCache {
 
         if (isHit) {
             hits.incrementAndGet();
-            plan = cache.get(cacheKey);
+            plan = cache.get(cacheKey).getPlan();
         } else {
             misses.incrementAndGet();
             String operation = normalizedSql.split(" ")[0].toUpperCase(); 
@@ -90,13 +92,15 @@ public class QueryPlanCache {
                    "    \"rows_estimated\": 100\n" +
                    "  }\n" +
                    "}";
-            cache.put(cacheKey, plan);
+            
+            CachedEntry entry = new CachedEntry(plan, normalizedSql, normalizer.getParameters(), CACHE_VERSION);
+            cache.put(cacheKey, entry);
         }
 
         long endTime = System.nanoTime();
         long executionTimeMs = (endTime - startTime) / 1000000;
         
-        return new CacheResult(plan, normalizer.getParameters(), isHit, executionTimeMs);
+        return new CacheResult(plan, normalizedSql, normalizer.getParameters(), isHit, executionTimeMs);
     }
 
     public void clearCache() {
@@ -109,7 +113,7 @@ public class QueryPlanCache {
         return Map.of("hits", hits.get(), "misses", misses.get());
     }
 
-    public Map<Long, String> getCacheDump() {
+    public Map<Long, CachedEntry> getCacheDump() {
         return cache;
     }
 
