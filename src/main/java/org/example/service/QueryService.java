@@ -21,7 +21,7 @@ public class QueryService {
         return cache.getStats();
     }
 
-    public Map<String, String> getCacheDump() {
+    public Map<Long, String> getCacheDump() {
         return cache.getCacheDump();
     }
 }

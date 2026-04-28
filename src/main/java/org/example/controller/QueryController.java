@@ -40,7 +40,7 @@ public class QueryController {
     }
 
     @GetMapping("/cache-dump")
-    public Map<String, String> getCacheDump() {
+    public Map<Long, String> getCacheDump() {
         return queryService.getCacheDump();
     }
 }

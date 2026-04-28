@@ -14,9 +14,11 @@ import java.sql.DriverManager;
 import java.sql.Statement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.security.MessageDigest;
+import java.nio.charset.StandardCharsets;
 
 public class QueryPlanCache {
-    private final Map<String, String> cache = new ConcurrentHashMap<>();
+    private final Map<Long, String> cache = new ConcurrentHashMap<>();
     private final AtomicInteger hits = new AtomicInteger(0);
     private final AtomicInteger misses = new AtomicInteger(0);
     private Connection connection;
@@ -38,20 +40,20 @@ public class QueryPlanCache {
         SQLiteParser parser = new SQLiteParser(tokens);
         ParseTree tree = parser.parse();
 
-        ParseTreeWalker walker = new ParseTreeWalker();
         QueryNormalizer normalizer = new QueryNormalizer();
-        walker.walk(normalizer, tree);
-        String key = normalizer.getNormalizedSql();
+        normalizer.normalize(tree);
+        String normalizedSql = normalizer.getNormalizedSql();
+        long cacheKey = generateHash(normalizedSql);
 
-        boolean isHit = cache.containsKey(key);
+        boolean isHit = cache.containsKey(cacheKey);
         String plan;
 
         if (isHit) {
             hits.incrementAndGet();
-            plan = cache.get(key);
+            plan = cache.get(cacheKey);
         } else {
             misses.incrementAndGet();
-            String operation = key.split(" ")[0].toUpperCase(); 
+            String operation = normalizedSql.split(" ")[0].toUpperCase(); 
             
             String strategy = "Optimal Index Scan";
             
@@ -59,7 +61,7 @@ public class QueryPlanCache {
             if (connection != null && operation.equals("SELECT")) {
                 try (Statement stmt = connection.createStatement()) {
                     // SQLite EXPLAIN QUERY PLAN returns details about how it will execute
-                    ResultSet rs = stmt.executeQuery("EXPLAIN QUERY PLAN " + key);
+                    ResultSet rs = stmt.executeQuery("EXPLAIN QUERY PLAN " + normalizedSql);
                     StringBuilder strategyBuilder = new StringBuilder();
                     while (rs.next()) {
                         strategyBuilder.append(rs.getString("detail")).append(" | ");
@@ -88,7 +90,7 @@ public class QueryPlanCache {
                    "    \"rows_estimated\": 100\n" +
                    "  }\n" +
                    "}";
-            cache.put(key, plan);
+            cache.put(cacheKey, plan);
         }
 
         long endTime = System.nanoTime();
@@ -107,7 +109,22 @@ public class QueryPlanCache {
         return Map.of("hits", hits.get(), "misses", misses.get());
     }
 
-    public Map<String, String> getCacheDump() {
+    public Map<Long, String> getCacheDump() {
         return cache;
+    }
+
+    private long generateHash(String input) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] encodedhash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
+            long hash = 0;
+            for (int i = 0; i < 8; i++) {
+                hash <<= 8;
+                hash |= (encodedhash[i] & 0xFF);
+            }
+            return hash;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

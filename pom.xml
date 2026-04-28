@@ -64,6 +64,14 @@
         </exclusion>
       </exclusions>
     </dependency>
+
+    <!-- Support for running JUnit 4 tests on JUnit 5 platform -->
+    <dependency>
+      <groupId>org.junit.vintage</groupId>
+      <artifactId>junit-vintage-engine</artifactId>
+      <version>5.10.2</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -92,6 +100,9 @@
             </goals>
           </execution>
         </executions>
+        <configuration>
+          <visitor>true</visitor>
+        </configuration>
       </plugin>
       <!-- JaCoCo Plugin for Test Coverage -->
       <plugin>
