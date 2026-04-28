@@ -14,7 +14,7 @@ To go above and beyond the assignment requirements, a fully functional Proof of 
 *   **Frontend Dashboard (Vercel):** [https://tg-assignment-lac.vercel.app/](https://tg-assignment-lac.vercel.app/)
 *   **Backend API (Render):** [https://tg-assignment-xr8i.onrender.com/api/query/plan](https://tg-assignment-xr8i.onrender.com/api/query/plan)
 
-> **Note:** The backend is deployed on Render's free tier. If the backend receives no traffic for a short period, it spins down to conserve resources. Because of this, **please allow up to 40 seconds for the backend to cold-start** upon executing your first query. Subsequent queries will be lightning fast.
+> **Note:** The backend is deployed on Render's free tier. If the backend is not in use, Render spins down the container to conserve resources. Because of this, **it typically takes up to 50 seconds to spin up the container** upon executing your first query. Subsequent queries will be lightning fast.
 
 ### Tech Stack & Architecture
 *   **Frontend Dashboard:** A modern React & Vite web application featuring a dark-mode, glassmorphism UI. It allows users to input complex SQL queries, hit the backend, and instantly visualize the returned JSON execution plans and dynamic cache telemetry (Total Hits vs. Total Misses).

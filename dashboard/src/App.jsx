@@ -54,7 +54,14 @@ function App() {
 
   return (
     <div style={{ width: '100%', maxWidth: '100%' }}>
-      <h1 style={{ background: '-webkit-linear-gradient(45deg, var(--accent), #f06)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '40px', paddingBottom: '10px', lineHeight: '1.2' }}>Query Plan Dashboard</h1>
+      <h1 style={{ background: '-webkit-linear-gradient(45deg, var(--accent), #f06)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '20px', paddingBottom: '10px', lineHeight: '1.2' }}>Query Plan Dashboard</h1>
+      
+      <div style={{ marginBottom: '30px', padding: '15px 20px', borderRadius: '8px', backgroundColor: 'var(--social-bg)', borderLeft: '4px solid #f59e0b', color: 'var(--text)', fontSize: '14px', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+        <span style={{ fontSize: '24px' }}>⏳</span>
+        <div>
+          <strong>Notice:</strong> The backend is deployed on Render.com. If the service is idle, it takes around <strong>50 seconds</strong> to start the container, so you might experience an initial delay.
+        </div>
+      </div>
       <QueryForm onSubmit={handleQuerySubmit} />
       {loading && <div style={{ padding: '20px', color: 'var(--accent)', fontWeight: 'bold' }}>Analyzing Query...</div>}
       <ResultDisplay result={result} error={error} />
