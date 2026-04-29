@@ -9,7 +9,7 @@ function App() {
   const [stats, setStats] = useState(null);
   const [cacheDump, setCacheDump] = useState(null);
 
-  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://tg-assignment-xr8i.onrender.com';
+  const BACKEND_URL = 'https://tg-assignment-xr8i.onrender.com';
 
   const handleQuerySubmit = async (query) => {
     setLoading(true);
@@ -69,7 +69,7 @@ function App() {
       {/* Top dashboard section (constrained width with padding) */}
       <div style={{ padding: '50px 20px', maxWidth: '800px', margin: '0 auto' }}>
         <h1 style={{ background: '-webkit-linear-gradient(45deg, var(--accent), #f06)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '20px', paddingBottom: '10px', lineHeight: '1.2' }}>Query Plan Dashboard</h1>
-        
+
         <div style={{ marginBottom: '30px', padding: '15px 20px', borderRadius: '8px', backgroundColor: 'var(--social-bg)', borderLeft: '4px solid #f59e0b', color: 'var(--text)', fontSize: '14px', textAlign: 'left', display: 'flex', alignItems: 'flex-start', gap: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
           <span style={{ fontSize: '24px', marginTop: '2px' }}>💡</span>
           <div style={{ lineHeight: '1.5' }}>
@@ -111,7 +111,7 @@ function App() {
             </div>
           </div>
         )}
-        
+
         {cacheDump && (
           <div style={{ marginTop: '30px', width: '100%', padding: '0 20px', boxSizing: 'border-box', textAlign: 'left' }}>
             <h3 style={{ marginTop: 0, color: 'var(--text-h)', marginBottom: '20px', fontSize: '20px', paddingLeft: '10px' }}>Cache Contents ({Object.keys(cacheDump).length} entries)</h3>
@@ -135,7 +135,7 @@ function App() {
                       // Handle both old String format and new CachedEntry object format
                       const isObject = typeof value === 'object' && value !== null;
                       const entry = isObject ? value : { plan: value, normalizedSql: 'N/A', version: 'N/A', parameters: [], cachedAt: 0 };
-                      
+
                       let planInfo = {};
                       try {
                         const parsed = JSON.parse(entry.plan);
@@ -143,11 +143,11 @@ function App() {
                       } catch (e) {
                         planInfo = { strategy: 'Invalid JSON' };
                       }
-                      
-                      const cachedTime = entry.cachedAt > 0 
-                        ? new Date(entry.cachedAt * 1000).toLocaleTimeString() 
+
+                      const cachedTime = entry.cachedAt > 0
+                        ? new Date(entry.cachedAt * 1000).toLocaleTimeString()
                         : 'Unknown';
-                      
+
                       return (
                         <tr key={index} style={{ borderBottom: '1px solid var(--border)', background: index % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.1)' }}>
                           <td style={{ padding: '15px', color: '#94a3b8', fontFamily: 'var(--mono)', fontSize: '12px' }}>
