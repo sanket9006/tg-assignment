@@ -77,7 +77,10 @@ function App() {
               <strong>Notice:</strong> The backend is deployed on Render.com. If the service is idle, it takes around <strong>50 seconds</strong> to start the container, so you might experience an initial delay.
             </p>
             <p>
-              This app is powered by an <strong>SQLite database</strong> using the sample <a href="https://github.com/sanket9006/tg-assignment/blob/master/northwind.db" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>northwind.db</a> schema. You are welcome to submit your own custom queries to test it out!
+              This app is powered by an <strong>SQLite database</strong> using the sample <a href="https://github.com/sanket9006/tg-assignment/blob/master/northwind.db" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>northwind.db</a> schema.
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              <strong>Tip:</strong> To see the actual schema or run custom queries, download the database from the link above and upload it to <a href="https://sqliteviewer.app/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>sqliteviewer.app</a>.
             </p>
           </div>
         </div>

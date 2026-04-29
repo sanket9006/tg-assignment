@@ -4,6 +4,10 @@ This project is a comprehensive, full-stack implementation of a **Query Plan Cac
 
 Unlike a simple theoretical pseudo-code exercise, this project includes a **fully functional Java/Spring Boot backend** powered by ANTLR4 and embedded SQLite, alongside a **React-based real-time dashboard** to visualize cache hits, misses, and execution latencies.
 
+## 🏗️ Architecture Overview
+
+![Architecture Diagram](architecture-diagram.png)
+
 ---
 
 ## 🚀 The Currently Implemented System (POC)
